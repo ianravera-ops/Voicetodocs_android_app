@@ -1,0 +1,17 @@
+## Copy this file to local.properties (never commit local.properties).
+## Android Studio usually writes sdk.dir automatically.
+
+# sdk.dir=/Users/YOU/Library/Android/sdk
+
+## Gemini API key from Google AI Studio: https://aistudio.google.com/apikey
+## Injected into BuildConfig. Never commit a real key.
+GEMINI_API_KEY=your_gemini_api_key_here
+
+## OAuth 2.0 Web client ID from Google Cloud Console.
+## Used as Credential Manager serverClientId (this is NOT the Android client ID).
+## Keep this placeholder until you create a real client. Do not invent a fake ID.
+WEB_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+
+## OAuth 2.0 Android client ID from Google Cloud Console (package + SHA-1).
+## Documented here for setup; the Android client is matched by package name, not by this string at runtime.
+ANDROID_CLIENT_ID=YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com

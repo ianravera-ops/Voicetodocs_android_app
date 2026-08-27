@@ -1,3 +1,2 @@
-# Add project specific ProGuard rules here.
-# By default the flags in this file are appended to flags specified
-# in $ANDROID_HOME/tools/proguard/proguard-android-optimize.txt
+# Debug builds are not minified. Keep this file so release builds can be enabled later.
+-keep class com.voicetodocs.cos.** { *; }

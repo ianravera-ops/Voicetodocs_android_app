@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="ic_launcher_bg">#0B5F56</color>
+    <color name="cream">#F7F1E8</color>
+    <color name="ink">#1A1A1A</color>
+    <color name="teal">#0B5F56</color>
+    <color name="teal_dark">#073E39</color>
+    <color name="error">#9B1C1C</color>
+    <color name="ok">#1B5E20</color>
 </resources>
