@@ -1,0 +1,9 @@
+{
+  "name": "VoiceToDocs Android",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "user": "ubuntu",
+  "install": "./gradlew --no-daemon assembleDebug testDebugUnitTest"
+}
