@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Voice To Docs</string>
+    <string name="transcript_hint">Paste or dictate a transcript</string>
+    <string name="summarize_action">Summarize</string>
+    <string name="empty_transcript_hint">Add a transcript first.</string>
+    <string name="no_action_items">No action items detected.</string>
+    <string name="digest_format">Summary:\n%1$s\n\nAction items:\n%2$s\n\nDraft reply:\n%3$s</string>
+</resources>
