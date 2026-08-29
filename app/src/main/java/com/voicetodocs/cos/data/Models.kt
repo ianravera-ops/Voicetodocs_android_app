@@ -18,6 +18,23 @@ data class VoiceMemoAnalysis(
     val summary: String
 )
 
+@Serializable
+data class RecordingNote(
+    val id: String,
+    val createdAtMillis: Long,
+    val summary: String,
+    val open: Boolean = true,
+    val notesDocId: String = ""
+)
+
+data class CalendarItem(
+    val id: String,
+    val title: String,
+    val whenLabel: String,
+    val location: String,
+    val startDate: String
+)
+
 data class DriveStructure(
     val folderId: String,
     val audioInboxId: String,

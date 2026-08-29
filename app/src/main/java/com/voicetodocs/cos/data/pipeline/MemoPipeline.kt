@@ -4,12 +4,14 @@ import com.voicetodocs.cos.data.AppLanguage
 import com.voicetodocs.cos.data.CosException
 import com.voicetodocs.cos.data.CosFormatters
 import com.voicetodocs.cos.data.CosPreferences
+import com.voicetodocs.cos.data.RecordingNote
 import com.voicetodocs.cos.data.VoiceMemoAnalysis
 import com.voicetodocs.cos.data.gemini.GeminiService
 import com.voicetodocs.cos.data.google.DocsWriter
 import com.voicetodocs.cos.data.google.DriveWorkspace
 import java.io.File
 import java.time.Instant
+import java.util.UUID
 
 enum class MemoStep {
     SAVING_AUDIO,
@@ -54,6 +56,16 @@ class MemoPipeline(
         docs.prependDocument(
             structure.notesDocId,
             CosFormatters.notesBlock(nowLabel, analysis, sourceRef, language)
+        )
+
+        prefs.addRecording(
+            RecordingNote(
+                id = UUID.randomUUID().toString(),
+                createdAtMillis = Instant.now().toEpochMilli(),
+                summary = analysis.summary.trim(),
+                open = true,
+                notesDocId = structure.notesDocId
+            )
         )
 
         onStep(MemoStep.DONE)

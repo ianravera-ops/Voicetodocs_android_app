@@ -30,9 +30,10 @@ import com.voicetodocs.cos.data.VisibleFailure
 import com.voicetodocs.cos.data.pipeline.MemoStep
 import com.voicetodocs.cos.ui.CosSession
 import com.voicetodocs.cos.ui.components.CosBody
-import com.voicetodocs.cos.ui.components.CosPrimaryButton
+import com.voicetodocs.cos.ui.components.CosScreen
 import com.voicetodocs.cos.ui.components.CosSecondaryButton
 import com.voicetodocs.cos.ui.components.CosStatusBanner
+import com.voicetodocs.cos.ui.components.CosTextAction
 import com.voicetodocs.cos.ui.components.CosTitle
 import com.voicetodocs.cos.ui.components.StatusKind
 import com.voicetodocs.cos.ui.theme.Danger
@@ -41,10 +42,21 @@ import com.voicetodocs.cos.ui.theme.Teal
 import java.io.File
 
 @Composable
-fun RecordSection(
+fun RecordScreen(
     viewModel: RecordViewModel,
     session: CosSession,
-    onOpenNotes: () -> Unit
+    onBack: () -> Unit
+) {
+    CosScreen {
+        RecordSection(viewModel, session)
+        CosTextAction(stringResource(R.string.back), onClick = onBack)
+    }
+}
+
+@Composable
+fun RecordSection(
+    viewModel: RecordViewModel,
+    session: CosSession
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -152,9 +164,6 @@ fun RecordSection(
         }
     }
 
-    if (state.done) {
-        CosPrimaryButton(stringResource(R.string.open_notes), onClick = onOpenNotes)
-    }
     if (state.error != null) {
         CosSecondaryButton(stringResource(R.string.try_again), onClick = {
             val file = pendingFile

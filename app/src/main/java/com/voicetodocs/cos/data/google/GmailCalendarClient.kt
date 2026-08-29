@@ -1,6 +1,9 @@
 package com.voicetodocs.cos.data.google
 
 import android.util.Base64
+import com.voicetodocs.cos.data.AppLanguage
+import com.voicetodocs.cos.data.CalendarItem
+import com.voicetodocs.cos.data.CosFormatters
 import com.voicetodocs.cos.data.MailThread
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -8,9 +11,34 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.time.Instant
 import java.util.Locale
 
 class GmailCalendarClient(private val http: GoogleHttp) {
+
+    suspend fun upcomingEvents(language: AppLanguage, allDayLabel: String): List<CalendarItem> {
+        val timeMin = URLEncoder.encode(Instant.now().toString(), StandardCharsets.UTF_8)
+        val url =
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events" +
+                "?timeMin=$timeMin&singleEvents=true&orderBy=startTime&maxResults=5" +
+                "&fields=items(id,summary,location,start)"
+        val json = http.get(url)
+        val items = json["items"]?.jsonArray ?: return emptyList()
+        val locale = if (language == AppLanguage.SPANISH) Locale("es", "US") else Locale.US
+        return items.mapNotNull { el ->
+            val obj = el.jsonObject
+            val start = obj["start"]?.jsonObject
+            val dateTime = start?.stringOrNull("dateTime")
+            val date = start?.stringOrNull("date")
+            CalendarItem(
+                id = obj.stringOrNull("id") ?: return@mapNotNull null,
+                title = obj.stringOrNull("summary") ?: "(No title)",
+                whenLabel = CosFormatters.formatEventWhen(dateTime, date, allDayLabel, locale),
+                location = obj.stringOrNull("location").orEmpty(),
+                startDate = CosFormatters.eventStartDate(dateTime, date)
+            )
+        }
+    }
 
     suspend fun importantThreads(): List<MailThread> {
         val q = URLEncoder.encode(

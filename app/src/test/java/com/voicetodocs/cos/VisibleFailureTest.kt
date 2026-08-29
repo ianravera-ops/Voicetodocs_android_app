@@ -68,9 +68,18 @@ class VisibleFailureTest {
         assertFalse(vm.state.value.loading)
 
         vm.load {
-            vm.showMail(emptyList())
+            vm.showDay(emptyList(), emptyList(), null)
         }
         assertNull(vm.state.value.error)
         assertFalse(vm.state.value.loading)
+    }
+
+    @Test
+    fun calendarLoadShowsErrorAndAllowsRetry() = runTest {
+        val vm = HomeViewModel()
+        vm.load { throw CosException("Google returned an error: calendar 401") }
+        assertEquals("Google returned an error: calendar 401", vm.state.value.error)
+        vm.load { vm.showDay(emptyList(), emptyList(), null) }
+        assertNull(vm.state.value.error)
     }
 }

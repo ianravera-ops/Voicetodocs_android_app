@@ -7,6 +7,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 private val Context.dataStore by preferencesDataStore(name = "cos_prefs")
 
@@ -18,6 +20,8 @@ class CosPreferences(private val context: Context) {
     private val folderId = stringPreferencesKey("drive_folder_id")
     private val inboxId = stringPreferencesKey("drive_inbox_id")
     private val notesId = stringPreferencesKey("doc_notes_id")
+    private val recordingNotes = stringPreferencesKey("recording_notes")
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     val languageFlow: Flow<AppLanguage> =
         context.dataStore.data.map { AppLanguage.fromCode(it[lang] ?: "en") }
@@ -64,6 +68,21 @@ class CosPreferences(private val context: Context) {
         }
     }
 
+    suspend fun recordings(): List<RecordingNote> {
+        val raw = context.dataStore.data.first()[recordingNotes] ?: return emptyList()
+        return runCatching { json.decodeFromString<List<RecordingNote>>(raw) }.getOrDefault(emptyList())
+    }
+
+    suspend fun addRecording(note: RecordingNote) {
+        val next = listOf(note) + recordings().filter { it.id != note.id }
+        context.dataStore.edit { it[recordingNotes] = json.encodeToString(next) }
+    }
+
+    suspend fun setRecordingOpen(id: String, open: Boolean) {
+        val next = recordings().map { if (it.id == id) it.copy(open = open) else it }
+        context.dataStore.edit { it[recordingNotes] = json.encodeToString(next) }
+    }
+
     suspend fun clearSession() {
         context.dataStore.edit {
             it.remove(email)
@@ -72,6 +91,7 @@ class CosPreferences(private val context: Context) {
             it.remove(folderId)
             it.remove(inboxId)
             it.remove(notesId)
+            it.remove(recordingNotes)
         }
     }
 }

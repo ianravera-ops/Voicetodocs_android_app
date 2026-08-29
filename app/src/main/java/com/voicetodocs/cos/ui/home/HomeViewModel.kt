@@ -4,18 +4,27 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.voicetodocs.cos.data.AppLanguage
+import com.voicetodocs.cos.data.CalendarItem
+import com.voicetodocs.cos.data.DayIndex
 import com.voicetodocs.cos.data.MailThread
+import com.voicetodocs.cos.data.RecordingNote
 import com.voicetodocs.cos.data.SignedInUser
 import com.voicetodocs.cos.data.VisibleFailure
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 data class HomeUiState(
     val language: AppLanguage = AppLanguage.ENGLISH,
     val user: SignedInUser? = null,
+    val yesterdayNotes: List<RecordingNote> = emptyList(),
+    val todayNotes: List<RecordingNote> = emptyList(),
+    val openNotes: List<RecordingNote> = emptyList(),
     val mail: List<MailThread> = emptyList(),
+    val firstToday: CalendarItem? = null,
     val loading: Boolean = false,
     val error: String? = null
 )
@@ -42,8 +51,22 @@ class HomeViewModel : ViewModel() {
         _state.update { it.copy(user = user, language = language) }
     }
 
-    fun showMail(mail: List<MailThread>) {
-        _state.update { it.copy(mail = mail, error = null) }
+    fun showDay(
+        notes: List<RecordingNote>,
+        mail: List<MailThread>,
+        firstToday: CalendarItem?,
+        today: LocalDate = LocalDate.now(),
+        zone: ZoneId = ZoneId.systemDefault()
+    ) {
+        _state.update {
+            it.copy(
+                yesterdayNotes = DayIndex.onDate(notes, today.minusDays(1), zone),
+                todayNotes = DayIndex.onDate(notes, today, zone),
+                openNotes = DayIndex.openItems(notes),
+                mail = mail,
+                firstToday = firstToday
+            )
+        }
     }
 
     fun setLanguage(language: AppLanguage) {

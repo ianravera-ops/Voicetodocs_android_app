@@ -22,6 +22,7 @@ import com.voicetodocs.cos.ui.components.CosBody
 import com.voicetodocs.cos.ui.components.CosScreen
 import com.voicetodocs.cos.ui.home.HomeScreen
 import com.voicetodocs.cos.ui.home.HomeViewModel
+import com.voicetodocs.cos.ui.record.RecordScreen
 import com.voicetodocs.cos.ui.record.RecordViewModel
 import com.voicetodocs.cos.ui.setup.SetupScreen
 import com.voicetodocs.cos.ui.setup.SetupViewModel
@@ -63,16 +64,23 @@ fun CosApp(session: CosSession) {
                     }
                     composable(Routes.Home) {
                         val homeVm: HomeViewModel = viewModel(factory = HomeViewModel.factory())
-                        val recordVm: RecordViewModel = viewModel(factory = RecordViewModel.factory())
                         HomeScreen(
                             homeViewModel = homeVm,
-                            recordViewModel = recordVm,
                             session = session,
+                            onRecord = { nav.navigate(Routes.Record) },
                             onSignOut = {
                                 nav.navigate(Routes.Setup) {
                                     popUpTo(0) { inclusive = true }
                                 }
                             }
+                        )
+                    }
+                    composable(Routes.Record) {
+                        val recordVm: RecordViewModel = viewModel(factory = RecordViewModel.factory())
+                        RecordScreen(
+                            viewModel = recordVm,
+                            session = session,
+                            onBack = { nav.popBackStack() }
                         )
                     }
                 }
@@ -84,4 +92,5 @@ fun CosApp(session: CosSession) {
 object Routes {
     const val Setup = "setup"
     const val Home = "home"
+    const val Record = "record"
 }
