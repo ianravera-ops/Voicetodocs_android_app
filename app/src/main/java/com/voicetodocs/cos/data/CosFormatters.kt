@@ -1,117 +1,23 @@
 package com.voicetodocs.cos.data
 
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import java.util.UUID
 
 object CosFormatters {
-    val SHEET_HEADERS = listOf(
-        "id",
-        "created_at",
-        "source",
-        "source_ref",
-        "domain",
-        "priority",
-        "status",
-        "title",
-        "notes",
-        "due_date",
-        "people",
-        "bluf",
-        "draft_link",
-        "master_log_ref",
-        "requires_human"
-    )
-
     fun timestamp(now: Instant = Instant.now(), zone: ZoneId = ZoneId.systemDefault()): String {
         return DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm z")
             .withZone(zone)
             .format(now)
     }
 
-    fun transcriptBlock(nowLabel: String, transcript: String, sourceRef: String): String {
-        return buildString {
-            append("=== ").append(nowLabel).append(" ===\n")
-            append("Source: ").append(sourceRef).append("\n\n")
-            append(transcript.trim()).append("\n\n")
-            append("--------------------\n\n")
-        }
-    }
-
-    fun executiveSummaryBlock(
-        nowLabel: String,
-        analysis: VoiceMemoAnalysis,
-        sourceRef: String,
-        language: AppLanguage
-    ): String {
-        val actions = if (analysis.action_items.isEmpty()) {
-            "—"
-        } else {
-            analysis.action_items.joinToString("\n") { "- ${it.title}" }
-        }
-        val blufHeading = if (language == AppLanguage.SPANISH) "LO ESENCIAL" else "BLUF"
-        val actionsHeading = if (language == AppLanguage.SPANISH) "ACCIONES" else "ACTIONS"
-        val contextHeading = if (language == AppLanguage.SPANISH) "CONTEXTO" else "CONTEXT"
-        val risksHeading = if (language == AppLanguage.SPANISH) "RIESGOS" else "RISKS"
-        val financeNote = if (analysis.domainEnum() == Domain.FINANCE) {
-            if (language == AppLanguage.SPANISH) {
-                "\n(Tema de dinero: solo se marca para revisión humana. Sin banca en esta versión.)"
-            } else {
-                "\n(Finance flag only — human review required. No banking in this version.)"
-            }
-        } else {
-            ""
-        }
-        return buildString {
-            append("=== ").append(nowLabel).append(" ===\n")
-            append("Domain: ").append(analysis.domainEnum().name).append(financeNote).append("\n")
-            append("Source: ").append(sourceRef).append("\n\n")
-            append(blufHeading).append("\n").append(analysis.bluf.trim()).append("\n\n")
-            append(actionsHeading).append("\n").append(actions).append("\n\n")
-            append(contextHeading).append("\n").append(analysis.strategic_notes.trim().ifBlank { "—" }).append("\n\n")
-            append(risksHeading).append("\n").append(analysis.clarifications_or_risks.trim().ifBlank { "—" }).append("\n\n")
-            append("--------------------\n\n")
-        }
-    }
-
-    fun actionRows(
-        analysis: VoiceMemoAnalysis,
-        source: String,
-        sourceRef: String,
-        masterLogRef: String,
-        createdAt: String
-    ): List<List<String>> {
-        val domain = analysis.domainEnum()
-        val requiresHuman = if (analysis.requiresHuman()) "TRUE" else "FALSE"
-        val items = analysis.action_items.ifEmpty {
-            if (analysis.is_actionable) {
-                listOf(ActionItemDraft(title = analysis.bluf.take(80), notes = analysis.strategic_notes))
-            } else {
-                emptyList()
-            }
-        }
-        return items.map { item ->
-            listOf(
-                UUID.randomUUID().toString(),
-                createdAt,
-                source,
-                sourceRef,
-                domain.name,
-                item.priority.ifBlank { "NORMAL" },
-                "OPEN",
-                item.title,
-                item.notes,
-                item.due_date,
-                item.people,
-                analysis.bluf,
-                "",
-                masterLogRef,
-                requiresHuman
-            )
-        }
+    fun timeOfDay(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault(), locale: Locale = Locale.getDefault()): String {
+        return DateTimeFormatter.ofPattern("h:mm a", locale)
+            .withZone(zone)
+            .format(Instant.ofEpochMilli(epochMillis))
     }
 
     fun formatEventWhen(
@@ -132,5 +38,35 @@ object CosFormatters {
             return "$allDayLabel · $dateIso"
         }
         return allDayLabel
+    }
+
+    fun eventStartDate(dateTimeIso: String?, dateIso: String?, zone: ZoneId = ZoneId.systemDefault()): String {
+        if (!dateTimeIso.isNullOrBlank()) {
+            return try {
+                ZonedDateTime.parse(dateTimeIso).withZoneSameInstant(zone).toLocalDate().toString()
+            } catch (_: Exception) {
+                dateIso ?: LocalDate.now(zone).toString()
+            }
+        }
+        return dateIso ?: LocalDate.now(zone).toString()
+    }
+
+    fun notesBlock(
+        nowLabel: String,
+        analysis: VoiceMemoAnalysis,
+        sourceRef: String,
+        language: AppLanguage
+    ): String {
+        val summaryHeading = if (language == AppLanguage.SPANISH) "Resumen" else "Summary"
+        val transcriptHeading = if (language == AppLanguage.SPANISH) "Transcripción" else "Transcript"
+        return buildString {
+            append("=== ").append(nowLabel).append(" ===\n")
+            append("Source: ").append(sourceRef).append("\n\n")
+            append(summaryHeading).append("\n")
+            append(analysis.summary.trim().ifBlank { "—" }).append("\n\n")
+            append(transcriptHeading).append("\n")
+            append(analysis.transcript.trim().ifBlank { "—" }).append("\n\n")
+            append("--------------------\n\n")
+        }
     }
 }

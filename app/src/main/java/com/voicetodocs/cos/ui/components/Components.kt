@@ -20,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,19 +42,19 @@ fun CosScreen(
             .background(Cream)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
         content = content
     )
 }
 
 @Composable
 fun CosTitle(text: String) {
-    Text(text = text, fontSize = 36.sp, color = Ink, lineHeight = 42.sp)
+    Text(text = text, fontSize = 26.sp, color = Ink, lineHeight = 32.sp)
 }
 
 @Composable
 fun CosBody(text: String, modifier: Modifier = Modifier) {
-    Text(text = text, fontSize = 22.sp, color = Ink, lineHeight = 30.sp, modifier = modifier)
+    Text(text = text, fontSize = 17.sp, color = Ink, lineHeight = 24.sp, modifier = modifier)
 }
 
 @Composable
@@ -65,12 +64,12 @@ fun CosPrimaryButton(text: String, enabled: Boolean = true, onClick: () -> Unit)
         enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp),
-        shape = RoundedCornerShape(16.dp),
+            .height(56.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Teal, contentColor = OnTeal),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
-        Text(text = text, fontSize = 24.sp, textAlign = TextAlign.Center, lineHeight = 28.sp)
+        Text(text = text, fontSize = 16.sp, textAlign = TextAlign.Center, lineHeight = 20.sp)
     }
 }
 
@@ -81,18 +80,18 @@ fun CosSecondaryButton(text: String, enabled: Boolean = true, onClick: () -> Uni
         enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp),
-        shape = RoundedCornerShape(16.dp),
+            .height(52.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = Teal)
     ) {
-        Text(text = text, fontSize = 22.sp, textAlign = TextAlign.Center)
+        Text(text = text, fontSize = 16.sp, textAlign = TextAlign.Center)
     }
 }
 
 @Composable
 fun CosTextAction(text: String, onClick: () -> Unit) {
     TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Text(text = text, fontSize = 20.sp, color = Teal)
+        Text(text = text, fontSize = 16.sp, color = Teal)
     }
 }
 
@@ -111,13 +110,13 @@ fun CosStatusBanner(text: String, kind: StatusKind) {
     }
     Text(
         text = text,
-        fontSize = 22.sp,
+        fontSize = 16.sp,
         color = fg,
-        lineHeight = 30.sp,
+        lineHeight = 22.sp,
         modifier = Modifier
             .fillMaxWidth()
-            .background(bg, RoundedCornerShape(16.dp))
-            .padding(20.dp)
+            .background(bg, RoundedCornerShape(12.dp))
+            .padding(16.dp)
     )
 }
 
@@ -128,8 +127,8 @@ fun CosCard(content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(CardBg, RoundedCornerShape(16.dp))
-            .padding(20.dp),
+            .background(CardBg, RoundedCornerShape(12.dp))
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         content = content
     )

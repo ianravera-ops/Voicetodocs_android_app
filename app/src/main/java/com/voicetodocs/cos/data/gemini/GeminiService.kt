@@ -2,7 +2,6 @@ package com.voicetodocs.cos.data.gemini
 
 import com.voicetodocs.cos.BuildConfig
 import com.voicetodocs.cos.data.AppLanguage
-import com.voicetodocs.cos.data.CalendarItem
 import com.voicetodocs.cos.data.CosException
 import com.voicetodocs.cos.data.MailThread
 import com.voicetodocs.cos.data.VoiceMemoAnalysis
@@ -43,12 +42,8 @@ class GeminiService(
         ensureKey()
         val summaryLang = if (language == AppLanguage.SPANISH) "Spanish" else "English"
         val prompt = """
-            You are a personal chief of staff for an older adult.
             Transcribe the voice memo. Keep the transcript in the spoken language (auto-detect; do not translate the transcript).
-            Write bluf, action_items, strategic_notes, and clarifications_or_risks in $summaryLang.
-            Domain must be exactly one of: SIDE_WORK, FAMILY, FINANCE, PERSONAL, RELATIONSHIP.
-            Finance is flags only: if the memo is about money, set domain FINANCE, keep is_actionable false unless a human must review, and put a short flag in clarifications_or_risks. Do not give banking or investment instructions.
-            Do not mention medications, WhatsApp, or bank logins.
+            Write a short executive summary in $summaryLang. Capture the point, any follow-ups, and anything unclear.
             Return JSON only matching the schema.
         """.trimIndent()
         val text = generate(
@@ -68,7 +63,8 @@ class GeminiService(
         threads: List<MailThread>,
         language: AppLanguage
     ): List<MailThread> {
-        if (threads.isEmpty() || !hasKey()) return threads
+        if (threads.isEmpty()) return threads
+        ensureKey()
         val lang = if (language == AppLanguage.SPANISH) "Spanish" else "English"
         val payload = threads.mapIndexed { i, t ->
             "EMAIL ${i + 1}\nFrom: ${t.from}\nSubject: ${t.subject}\nBody:\n${t.plainLanguage.take(1200)}"
@@ -79,8 +75,8 @@ class GeminiService(
             Return JSON: {"items":[{"index":1,"plain":"..."}]}
             $payload
         """.trimIndent()
+        val text = generate(prompt, schema = PLAIN_EMAIL_SCHEMA)
         return try {
-            val text = generate(prompt, schema = PLAIN_EMAIL_SCHEMA)
             val obj = JSONObject(text)
             val items = obj.optJSONArray("items") ?: JSONArray()
             val byIndex = mutableMapOf<Int, String>()
@@ -92,63 +88,8 @@ class GeminiService(
                 val plain = byIndex[i + 1]
                 if (plain.isNullOrBlank()) t else t.copy(plainLanguage = plain)
             }
-        } catch (_: Exception) {
-            threads
-        }
-    }
-
-    suspend fun suggestReply(thread: MailThread, language: AppLanguage): String {
-        ensureKey()
-        val lang = if (language == AppLanguage.SPANISH) "Spanish" else "English"
-        val prompt = """
-            Draft a short, polite email reply in $lang for an older adult.
-            Be warm and clear. Do not promise money, medical advice, or anything they did not ask to send.
-            Return JSON: {"reply":"..."} with only the email body, no subject line.
-            From: ${thread.from}
-            Subject: ${thread.subject}
-            Message:
-            ${thread.plainLanguage.take(3000)}
-        """.trimIndent()
-        val text = generate(prompt, schema = REPLY_SCHEMA)
-        return try {
-            JSONObject(text).optString("reply").ifBlank { text }
-        } catch (_: Exception) {
-            text
-        }
-    }
-
-    suspend fun spokenBrief(
-        events: List<CalendarItem>,
-        threads: List<MailThread>,
-        language: AppLanguage,
-        emptyFallback: String
-    ): String {
-        if (events.isEmpty() && threads.isEmpty()) return emptyFallback
-        if (!hasKey()) {
-            return buildString {
-                if (events.isNotEmpty()) {
-                    append(events.joinToString(". ") { "${it.title}, ${it.whenLabel}" })
-                    append(". ")
-                }
-                if (threads.isNotEmpty()) {
-                    append(threads.joinToString(". ") { it.plainLanguage.ifBlank { it.subject } })
-                }
-            }.trim()
-        }
-        val lang = if (language == AppLanguage.SPANISH) "Spanish" else "English"
-        val prompt = """
-            Write a spoken daily brief in $lang for an older adult. Short sentences. 30-45 seconds when read aloud.
-            Calendar:
-            ${events.joinToString("\n") { "- ${it.title} (${it.whenLabel}) ${it.location}" }.ifBlank { "(none)" }}
-            Email:
-            ${threads.joinToString("\n") { "- ${it.from}: ${it.subject}. ${it.plainLanguage}" }.ifBlank { "(none)" }}
-            Return JSON: {"brief":"..."}
-        """.trimIndent()
-        val text = generate(prompt, schema = BRIEF_SCHEMA)
-        return try {
-            JSONObject(text).optString("brief").ifBlank { emptyFallback }
-        } catch (_: Exception) {
-            emptyFallback
+        } catch (e: Exception) {
+            throw CosException(geminiErrorTemplate.format(text.take(180)), e)
         }
     }
 
@@ -232,27 +173,9 @@ class GeminiService(
               "type": "object",
               "properties": {
                 "transcript": { "type": "string" },
-                "domain": { "type": "string", "enum": ["SIDE_WORK","FAMILY","FINANCE","PERSONAL","RELATIONSHIP"] },
-                "bluf": { "type": "string" },
-                "action_items": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "title": { "type": "string" },
-                      "notes": { "type": "string" },
-                      "priority": { "type": "string" },
-                      "due_date": { "type": "string" },
-                      "people": { "type": "string" }
-                    },
-                    "required": ["title"]
-                  }
-                },
-                "strategic_notes": { "type": "string" },
-                "clarifications_or_risks": { "type": "string" },
-                "is_actionable": { "type": "boolean" }
+                "summary": { "type": "string" }
               },
-              "required": ["transcript","domain","bluf","action_items","strategic_notes","clarifications_or_risks","is_actionable"]
+              "required": ["transcript","summary"]
             }
             """.trimIndent()
         )
@@ -277,14 +200,6 @@ class GeminiService(
               "required": ["items"]
             }
             """.trimIndent()
-        )
-
-        private val REPLY_SCHEMA = JSONObject(
-            """{"type":"object","properties":{"reply":{"type":"string"}},"required":["reply"]}"""
-        )
-
-        private val BRIEF_SCHEMA = JSONObject(
-            """{"type":"object","properties":{"brief":{"type":"string"}},"required":["brief"]}"""
         )
     }
 }

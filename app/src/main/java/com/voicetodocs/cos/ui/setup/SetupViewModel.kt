@@ -7,6 +7,7 @@ import com.voicetodocs.cos.AppContainer
 import com.voicetodocs.cos.data.AppLanguage
 import com.voicetodocs.cos.data.CosException
 import com.voicetodocs.cos.data.SignedInUser
+import com.voicetodocs.cos.data.VisibleFailure
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -57,10 +58,8 @@ class SetupViewModel(private val container: AppContainer) : ViewModel() {
                 container.prefs.saveDriveStructure(structure)
                 container.prefs.setSetupComplete(true)
                 _state.update { it.copy(busy = false, ready = true, status = statusDone) }
-            } catch (e: CosException) {
-                _state.update { it.copy(busy = false, error = e.userMessage, status = "") }
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, error = e.message ?: e.toString(), status = "") }
+                _state.update { it.copy(busy = false, error = VisibleFailure.of(e).message, status = "") }
             }
         }
     }

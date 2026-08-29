@@ -34,7 +34,8 @@ class GmailCalendarClient(private val http: GoogleHttp) {
                 id = obj.stringOrNull("id") ?: return@mapNotNull null,
                 title = obj.stringOrNull("summary") ?: "(No title)",
                 whenLabel = CosFormatters.formatEventWhen(dateTime, date, allDayLabel, locale),
-                location = obj.stringOrNull("location").orEmpty()
+                location = obj.stringOrNull("location").orEmpty(),
+                startDate = CosFormatters.eventStartDate(dateTime, date)
             )
         }
     }
@@ -82,6 +83,7 @@ class GmailCalendarClient(private val http: GoogleHttp) {
         val snippet = json.stringOrNull("snippet").orEmpty()
         val body = extractText(payload).ifBlank { snippet }
         val to = extractEmail(from)
+        val internalDate = last.stringOrNull("internalDate")?.toLongOrNull() ?: 0L
         return MailThread(
             id = threadId,
             from = from,
@@ -89,39 +91,31 @@ class GmailCalendarClient(private val http: GoogleHttp) {
             snippet = snippet,
             plainLanguage = body.take(2500),
             messageIdHeader = messageId,
-            toAddress = to
+            toAddress = to,
+            internalDateMillis = internalDate
         )
     }
 
-    suspend fun sendReply(
-        userEmail: String,
-        thread: MailThread,
-        bodyText: String
-    ) {
-        val subject = if (thread.subject.startsWith("Re:", ignoreCase = true)) {
-            thread.subject
-        } else {
-            "Re: ${thread.subject}"
-        }
-        val rfc = buildString {
-            append("From: ").append(userEmail).append("\r\n")
-            append("To: ").append(thread.toAddress.ifBlank { thread.from }).append("\r\n")
-            append("Subject: ").append(subject).append("\r\n")
-            if (thread.messageIdHeader.isNotBlank()) {
-                append("In-Reply-To: ").append(thread.messageIdHeader).append("\r\n")
-                append("References: ").append(thread.messageIdHeader).append("\r\n")
-            }
-            append("MIME-Version: 1.0\r\n")
-            append("Content-Type: text/plain; charset=UTF-8\r\n")
-            append("\r\n")
-            append(bodyText)
-        }
-        val raw = Base64.encodeToString(
-            rfc.toByteArray(StandardCharsets.UTF_8),
-            Base64.URL_SAFE or Base64.NO_WRAP
+    suspend fun threadsFromSendersSince(senders: List<String>, afterMillis: Long): List<MailThread> {
+        if (senders.isEmpty()) return emptyList()
+        val froms = senders.joinToString(" OR ") { "from:${it.trim()}" }
+        val q = URLEncoder.encode("($froms) in:inbox", StandardCharsets.UTF_8)
+        val list = http.get(
+            "https://gmail.googleapis.com/gmail/v1/users/me/threads?q=$q&maxResults=15"
         )
-        val body = """{"raw":"$raw","threadId":"${thread.id}"}"""
-        http.post("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", body)
+        val threads = list["threads"]?.jsonArray ?: return emptyList()
+        val allowed = senders.map { it.trim().lowercase() }.toSet()
+        val out = mutableListOf<MailThread>()
+        for (el in threads) {
+            val id = el.jsonObject.stringOrNull("id") ?: continue
+            val thread = fetchThread(id) ?: continue
+            val fromEmail = extractEmail(thread.from).lowercase()
+            if (fromEmail !in allowed) continue
+            if (thread.internalDateMillis <= afterMillis) continue
+            out += thread
+            if (out.size >= 8) break
+        }
+        return out.sortedBy { it.internalDateMillis }
     }
 
     private fun isNoise(from: String, subject: String): Boolean {

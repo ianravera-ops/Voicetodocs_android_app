@@ -22,19 +22,15 @@ import java.security.SecureRandom
 
 object CosScopes {
     const val GMAIL_READONLY = "https://www.googleapis.com/auth/gmail.readonly"
-    const val GMAIL_SEND = "https://www.googleapis.com/auth/gmail.send"
     const val CALENDAR_READONLY = "https://www.googleapis.com/auth/calendar.readonly"
     const val DRIVE_FILE = "https://www.googleapis.com/auth/drive.file"
     const val DOCUMENTS = "https://www.googleapis.com/auth/documents"
-    const val SPREADSHEETS = "https://www.googleapis.com/auth/spreadsheets"
 
     val all = listOf(
         GMAIL_READONLY,
-        GMAIL_SEND,
         CALENDAR_READONLY,
         DRIVE_FILE,
-        DOCUMENTS,
-        SPREADSHEETS
+        DOCUMENTS
     )
 }
 
@@ -81,17 +77,22 @@ class GoogleAuthManager(private val context: Context) {
         }
     }
 
-    suspend fun authorize(activity: Activity): String {
+    suspend fun authorize(activity: Activity): String = authorizeWith(activity)
+
+    suspend fun authorizeQuietly(): String = authorizeWith(context)
+
+    private suspend fun authorizeWith(host: Context): String {
         val request = AuthorizationRequest.builder()
             .setRequestedScopes(CosScopes.all.map { Scope(it) })
             .build()
-        val result = Identity.getAuthorizationClient(activity)
+        val result = Identity.getAuthorizationClient(host)
             .authorize(request)
             .await()
         if (result.hasResolution()) {
             val pending = result.pendingIntent
-                ?: throw CosException(context.getString(com.voicetodocs.cos.R.string.error_sign_in))
-            throw NeedsUserConsent(pending)
+                ?: throw CosException(context.getString(com.voicetodocs.cos.R.string.error_digest_sign_in))
+            if (host is Activity) throw NeedsUserConsent(pending)
+            throw CosException(context.getString(com.voicetodocs.cos.R.string.error_digest_sign_in))
         }
         val token = result.accessToken
             ?: throw CosException(context.getString(com.voicetodocs.cos.R.string.error_sign_in))
