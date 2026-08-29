@@ -1,6 +1,5 @@
 package com.voicetodocs.cos.data.google
 
-import com.voicetodocs.cos.data.CosFormatters
 import com.voicetodocs.cos.data.DriveStructure
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -8,7 +7,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -22,37 +20,22 @@ class DriveWorkspace(private val http: GoogleHttp) {
         existing?.let { cached ->
             if (fileExists(cached.folderId) &&
                 fileExists(cached.audioInboxId) &&
-                fileExists(cached.transcriptsDocId) &&
-                fileExists(cached.summariesDocId) &&
-                fileExists(cached.actionSheetId)
+                fileExists(cached.notesDocId)
             ) {
                 return cached
             }
         }
-        val folder = findOrCreateFolder("CoS", parentId = null)
-        val inbox = findOrCreateFolder("Audio_Inbox", parentId = folder)
-        val transcripts = findOrCreateGoogleFile(
-            name = "CoS_Voice_Transcripts",
+        val folder = findOrCreateFolder(FOLDER_NAME, parentId = null)
+        val inbox = findOrCreateFolder(AUDIO_FOLDER_NAME, parentId = folder)
+        val notes = findOrCreateGoogleFile(
+            name = NOTES_DOC_NAME,
             mime = MIME_DOC,
             parentId = folder
         )
-        val summaries = findOrCreateGoogleFile(
-            name = "CoS_Executive_Summaries",
-            mime = MIME_DOC,
-            parentId = folder
-        )
-        val sheet = findOrCreateGoogleFile(
-            name = "CoS_Action_Register",
-            mime = MIME_SHEET,
-            parentId = folder
-        )
-        ensureSheetHeaders(sheet)
         return DriveStructure(
             folderId = folder,
             audioInboxId = inbox,
-            transcriptsDocId = transcripts,
-            summariesDocId = summaries,
-            actionSheetId = sheet
+            notesDocId = notes
         )
     }
 
@@ -129,41 +112,12 @@ class DriveWorkspace(private val http: GoogleHttp) {
         return files[0].jsonObject.string("id")
     }
 
-    private suspend fun ensureSheetHeaders(spreadsheetId: String) {
-        val range = URLEncoder.encode("A1:O1", StandardCharsets.UTF_8)
-        val existing = try {
-            http.get(
-                "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/$range"
-            )
-        } catch (_: Exception) {
-            null
-        }
-        val first = existing?.get("values")?.jsonArray
-            ?.firstOrNull()
-            ?.jsonArray
-            ?.map { it.jsonPrimitive.content }
-            .orEmpty()
-        if (first == CosFormatters.SHEET_HEADERS) return
-        val body = buildJsonObject {
-            put(
-                "values",
-                JsonArray(
-                    listOf(
-                        JsonArray(CosFormatters.SHEET_HEADERS.map { JsonPrimitive(it) })
-                    )
-                )
-            )
-        }.toString()
-        http.put(
-            "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/A1:O1?valueInputOption=RAW",
-            body
-        )
-    }
-
     companion object {
+        const val FOLDER_NAME = "Voice notes"
+        const val AUDIO_FOLDER_NAME = "Audio"
+        const val NOTES_DOC_NAME = "Voice notes"
         private const val MIME_FOLDER = "application/vnd.google-apps.folder"
         private const val MIME_DOC = "application/vnd.google-apps.document"
-        private const val MIME_SHEET = "application/vnd.google-apps.spreadsheet"
     }
 }
 

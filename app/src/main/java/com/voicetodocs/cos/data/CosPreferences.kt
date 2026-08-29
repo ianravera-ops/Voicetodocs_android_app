@@ -17,9 +17,7 @@ class CosPreferences(private val context: Context) {
     private val setup = stringPreferencesKey("setup_complete")
     private val folderId = stringPreferencesKey("drive_folder_id")
     private val inboxId = stringPreferencesKey("drive_inbox_id")
-    private val transcriptsId = stringPreferencesKey("doc_transcripts_id")
-    private val summariesId = stringPreferencesKey("doc_summaries_id")
-    private val sheetId = stringPreferencesKey("sheet_actions_id")
+    private val notesId = stringPreferencesKey("doc_notes_id")
 
     val languageFlow: Flow<AppLanguage> =
         context.dataStore.data.map { AppLanguage.fromCode(it[lang] ?: "en") }
@@ -54,19 +52,15 @@ class CosPreferences(private val context: Context) {
         val prefs = context.dataStore.data.first()
         val f = prefs[folderId] ?: return null
         val inbox = prefs[inboxId] ?: return null
-        val t = prefs[transcriptsId] ?: return null
-        val s = prefs[summariesId] ?: return null
-        val sheet = prefs[sheetId] ?: return null
-        return DriveStructure(f, inbox, t, s, sheet)
+        val notes = prefs[notesId] ?: return null
+        return DriveStructure(f, inbox, notes)
     }
 
     suspend fun saveDriveStructure(structure: DriveStructure) {
         context.dataStore.edit {
             it[folderId] = structure.folderId
             it[inboxId] = structure.audioInboxId
-            it[transcriptsId] = structure.transcriptsDocId
-            it[summariesId] = structure.summariesDocId
-            it[sheetId] = structure.actionSheetId
+            it[notesId] = structure.notesDocId
         }
     }
 
@@ -77,9 +71,7 @@ class CosPreferences(private val context: Context) {
             it.remove(setup)
             it.remove(folderId)
             it.remove(inboxId)
-            it.remove(transcriptsId)
-            it.remove(summariesId)
-            it.remove(sheetId)
+            it.remove(notesId)
         }
     }
 }

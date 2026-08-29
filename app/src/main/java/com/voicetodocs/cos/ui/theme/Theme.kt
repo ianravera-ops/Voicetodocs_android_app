@@ -33,46 +33,39 @@ private val Colors = lightColorScheme(
 )
 
 private val Type = Typography(
-    displayLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 40.sp,
-        lineHeight = 46.sp,
-        color = Ink
-    ),
     headlineLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 38.sp,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 26.sp,
+        lineHeight = 32.sp,
         color = Ink
     ),
     headlineMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 26.sp,
-        lineHeight = 32.sp,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp,
+        lineHeight = 26.sp,
         color = Ink
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Normal,
-        fontSize = 22.sp,
-        lineHeight = 30.sp,
+        fontSize = 17.sp,
+        lineHeight = 24.sp,
         color = Ink
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Normal,
-        fontSize = 20.sp,
-        lineHeight = 28.sp,
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
         color = Ink
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp
+        fontWeight = FontWeight.Medium,
+        fontSize = 16.sp,
+        lineHeight = 22.sp
     )
 )
 

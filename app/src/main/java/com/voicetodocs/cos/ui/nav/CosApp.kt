@@ -10,25 +10,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.voicetodocs.cos.CosApplication
 import com.voicetodocs.cos.R
 import com.voicetodocs.cos.data.AppLanguage
 import com.voicetodocs.cos.data.LocaleHelper
 import com.voicetodocs.cos.ui.CosSession
-import com.voicetodocs.cos.ui.call.CallFavoritesScreen
 import com.voicetodocs.cos.ui.components.CosBody
 import com.voicetodocs.cos.ui.components.CosScreen
-import com.voicetodocs.cos.ui.docs.OpenDocsScreen
-import com.voicetodocs.cos.ui.draft.DraftEmailScreen
-import com.voicetodocs.cos.ui.draft.DraftViewModel
 import com.voicetodocs.cos.ui.home.HomeScreen
 import com.voicetodocs.cos.ui.home.HomeViewModel
-import com.voicetodocs.cos.ui.record.RecordScreen
 import com.voicetodocs.cos.ui.record.RecordViewModel
 import com.voicetodocs.cos.ui.setup.SetupScreen
 import com.voicetodocs.cos.ui.setup.SetupViewModel
@@ -41,7 +34,9 @@ fun CosApp(session: CosSession) {
     var start by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        start = if (session.containerRef.prefs.isSetupComplete()) Routes.Home else Routes.Setup
+        val ready = session.containerRef.prefs.isSetupComplete() &&
+            session.containerRef.prefs.driveStructure() != null
+        start = if (ready) Routes.Home else Routes.Setup
     }
 
     val baseContext = LocalContext.current
@@ -67,14 +62,12 @@ fun CosApp(session: CosSession) {
                         )
                     }
                     composable(Routes.Home) {
-                        val vm: HomeViewModel = viewModel(factory = HomeViewModel.factory(app))
+                        val homeVm: HomeViewModel = viewModel(factory = HomeViewModel.factory())
+                        val recordVm: RecordViewModel = viewModel(factory = RecordViewModel.factory())
                         HomeScreen(
-                            viewModel = vm,
+                            homeViewModel = homeVm,
+                            recordViewModel = recordVm,
                             session = session,
-                            onRecord = { nav.navigate(Routes.Record) },
-                            onDocs = { nav.navigate(Routes.Docs) },
-                            onCall = { nav.navigate(Routes.Call) },
-                            onDraft = { id -> nav.navigate("draft/$id") },
                             onSignOut = {
                                 nav.navigate(Routes.Setup) {
                                     popUpTo(0) { inclusive = true }
@@ -82,50 +75,13 @@ fun CosApp(session: CosSession) {
                             }
                         )
                     }
-                    composable(Routes.Record) {
-                        val vm: RecordViewModel = viewModel(factory = RecordViewModel.factory(app.container))
-                        RecordScreen(
-                            viewModel = vm,
-                            session = session,
-                            onBack = { nav.popBackStack() },
-                            onOpenNotes = {
-                                nav.navigate(Routes.Docs) {
-                                    popUpTo(Routes.Home)
-                                }
-                            }
-                        )
-                    }
-                    composable(Routes.Docs) {
-                        OpenDocsScreen(session = session, onBack = { nav.popBackStack() })
-                    }
-                    composable(Routes.Call) {
-                        CallFavoritesScreen(onBack = { nav.popBackStack() })
-                    }
-                    composable(
-                        route = Routes.Draft,
-                        arguments = listOf(navArgument("threadId") { type = NavType.StringType })
-                    ) { entry ->
-                        val id = entry.arguments?.getString("threadId").orEmpty()
-                        val vm: DraftViewModel = viewModel(factory = DraftViewModel.factory(app.container))
-                        DraftEmailScreen(
-                            threadId = id,
-                            viewModel = vm,
-                            session = session,
-                            onBack = { nav.popBackStack() }
-                        )
-                    }
                 }
             }
         }
     }
-
 }
 
 object Routes {
     const val Setup = "setup"
     const val Home = "home"
-    const val Record = "record"
-    const val Docs = "docs"
-    const val Call = "call"
-    const val Draft = "draft/{threadId}"
 }

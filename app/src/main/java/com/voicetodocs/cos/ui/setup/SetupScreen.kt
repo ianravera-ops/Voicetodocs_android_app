@@ -71,7 +71,7 @@ fun SetupScreen(
         CosCard {
             Text(
                 text = stringResource(R.string.permissions_title),
-                fontSize = 24.sp,
+                fontSize = 18.sp,
                 color = Ink
             )
             CosBody(stringResource(R.string.permissions_body))
@@ -137,12 +137,12 @@ private fun LangChip(
         label = {
             Text(
                 text = label,
-                fontSize = 22.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
+                fontSize = 16.sp,
+                modifier = Modifier.padding(vertical = 4.dp)
             )
         },
-        modifier = modifier.height(64.dp),
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = Teal,
             selectedLabelColor = OnTeal,

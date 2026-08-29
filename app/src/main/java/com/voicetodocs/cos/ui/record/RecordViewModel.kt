@@ -3,8 +3,7 @@ package com.voicetodocs.cos.ui.record
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.voicetodocs.cos.AppContainer
-import com.voicetodocs.cos.data.CosException
+import com.voicetodocs.cos.data.VisibleFailure
 import com.voicetodocs.cos.data.pipeline.MemoStep
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,12 +18,16 @@ data class RecordUiState(
     val done: Boolean = false
 )
 
-class RecordViewModel(private val container: AppContainer) : ViewModel() {
+class RecordViewModel : ViewModel() {
     private val _state = MutableStateFlow(RecordUiState())
     val state: StateFlow<RecordUiState> = _state
 
     fun markRecording(recording: Boolean, status: String) {
         _state.update { it.copy(recording = recording, status = status, error = null, done = false) }
+    }
+
+    fun markError(message: String) {
+        _state.update { it.copy(recording = false, busy = false, error = message, status = "") }
     }
 
     fun process(
@@ -38,18 +41,18 @@ class RecordViewModel(private val container: AppContainer) : ViewModel() {
                     _state.update { it.copy(status = statusFor(step), busy = step != MemoStep.DONE) }
                 }
                 _state.update { it.copy(busy = false, done = true, status = statusFor(MemoStep.DONE)) }
-            } catch (e: CosException) {
-                _state.update { it.copy(busy = false, error = e.userMessage, status = "") }
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, error = e.message ?: e.toString(), status = "") }
+                _state.update {
+                    it.copy(busy = false, error = VisibleFailure.of(e).message, status = "")
+                }
             }
         }
     }
 
     companion object {
-        fun factory(container: AppContainer) = object : ViewModelProvider.Factory {
+        fun factory() = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = RecordViewModel(container) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = RecordViewModel() as T
         }
     }
 }

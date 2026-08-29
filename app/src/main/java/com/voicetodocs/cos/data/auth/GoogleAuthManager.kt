@@ -22,19 +22,13 @@ import java.security.SecureRandom
 
 object CosScopes {
     const val GMAIL_READONLY = "https://www.googleapis.com/auth/gmail.readonly"
-    const val GMAIL_SEND = "https://www.googleapis.com/auth/gmail.send"
-    const val CALENDAR_READONLY = "https://www.googleapis.com/auth/calendar.readonly"
     const val DRIVE_FILE = "https://www.googleapis.com/auth/drive.file"
     const val DOCUMENTS = "https://www.googleapis.com/auth/documents"
-    const val SPREADSHEETS = "https://www.googleapis.com/auth/spreadsheets"
 
     val all = listOf(
         GMAIL_READONLY,
-        GMAIL_SEND,
-        CALENDAR_READONLY,
         DRIVE_FILE,
-        DOCUMENTS,
-        SPREADSHEETS
+        DOCUMENTS
     )
 }
 

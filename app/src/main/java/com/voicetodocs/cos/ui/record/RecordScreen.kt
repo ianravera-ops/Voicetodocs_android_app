@@ -26,14 +26,13 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.voicetodocs.cos.R
+import com.voicetodocs.cos.data.VisibleFailure
 import com.voicetodocs.cos.data.pipeline.MemoStep
 import com.voicetodocs.cos.ui.CosSession
 import com.voicetodocs.cos.ui.components.CosBody
 import com.voicetodocs.cos.ui.components.CosPrimaryButton
-import com.voicetodocs.cos.ui.components.CosScreen
 import com.voicetodocs.cos.ui.components.CosSecondaryButton
 import com.voicetodocs.cos.ui.components.CosStatusBanner
-import com.voicetodocs.cos.ui.components.CosTextAction
 import com.voicetodocs.cos.ui.components.CosTitle
 import com.voicetodocs.cos.ui.components.StatusKind
 import com.voicetodocs.cos.ui.theme.Danger
@@ -42,10 +41,9 @@ import com.voicetodocs.cos.ui.theme.Teal
 import java.io.File
 
 @Composable
-fun RecordScreen(
+fun RecordSection(
     viewModel: RecordViewModel,
     session: CosSession,
-    onBack: () -> Unit,
     onOpenNotes: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -68,102 +66,102 @@ fun RecordScreen(
         MemoStep.SAVING_AUDIO -> context.getString(R.string.status_saving_audio)
         MemoStep.UPLOADING -> context.getString(R.string.status_uploading)
         MemoStep.GEMINI -> context.getString(R.string.status_gemini)
-        MemoStep.TRANSCRIPT -> context.getString(R.string.status_transcript)
-        MemoStep.SUMMARY -> context.getString(R.string.status_summary)
-        MemoStep.ACTIONS -> context.getString(R.string.status_actions)
+        MemoStep.WRITING_DOC -> context.getString(R.string.status_writing_doc)
         MemoStep.DONE -> context.getString(R.string.status_done)
     }
 
-    CosScreen {
-        CosTitle(stringResource(R.string.record_title))
-        CosBody(stringResource(R.string.record_hint))
-
-        val bannerText = when {
-            micDenied -> stringResource(R.string.error_permission_mic)
-            state.error != null -> state.error!!
-            state.status.isNotBlank() -> state.status
-            else -> stringResource(R.string.record_hint)
-        }
-        val kind = when {
-            micDenied || state.error != null -> StatusKind.ERROR
-            state.done -> StatusKind.OK
-            state.recording || state.busy -> StatusKind.BUSY
-            else -> StatusKind.INFO
-        }
-        CosStatusBanner(bannerText, kind)
-
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Button(
-                onClick = {
-                    if (state.busy) return@Button
-                    if (state.recording) {
-                        val file = try {
-                            session.containerRef.recorder.stop()
-                        } catch (e: Exception) {
-                            viewModel.markRecording(false, e.message ?: "")
-                            return@Button
-                        }
-                        pendingFile = file
-                        viewModel.process(::stepLabel) { onStep ->
-                            session.withAccess {
-                                val lang = session.containerRef.prefs.language()
-                                session.containerRef.memoPipeline.process(file, lang, onStep)
-                            }
-                        }
-                    } else {
-                        val granted = ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.RECORD_AUDIO
-                        ) == PackageManager.PERMISSION_GRANTED
-                        if (granted) {
-                            startRecording(
-                                session,
-                                viewModel,
-                                context.getString(R.string.record_recording)
-                            ) { pendingFile = it }
-                        } else {
-                            permLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        }
-                    }
-                },
-                enabled = !state.busy,
-                modifier = Modifier.size(220.dp),
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (state.recording) Danger else Teal,
-                    contentColor = OnTeal
-                )
-            ) {
-                Text(
-                    text = if (state.recording) {
-                        stringResource(R.string.record_stop)
-                    } else {
-                        stringResource(R.string.record_start)
-                    },
-                    fontSize = 26.sp,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 30.sp
+    fun runPipeline(file: File) {
+        viewModel.process(::stepLabel) { onStep ->
+            session.withAccess {
+                val lang = session.containerRef.prefs.language()
+                session.containerRef.memoPipeline.process(
+                    audioFile = file,
+                    language = lang,
+                    emptyRecordingMessage = context.getString(R.string.error_empty_recording),
+                    missingFolderMessage = context.getString(R.string.error_missing_folder),
+                    onStep = onStep
                 )
             }
         }
+    }
 
-        if (state.done) {
-            CosPrimaryButton(stringResource(R.string.open_notes), onClick = onOpenNotes)
-        }
-        if (state.error != null) {
-            CosSecondaryButton(stringResource(R.string.try_again), onClick = {
-                val file = pendingFile
-                if (file != null && file.exists()) {
-                    viewModel.process(::stepLabel) { onStep ->
-                        session.withAccess {
-                            val lang = session.containerRef.prefs.language()
-                            session.containerRef.memoPipeline.process(file, lang, onStep)
-                        }
+    CosTitle(stringResource(R.string.record_title))
+    CosBody(stringResource(R.string.record_hint))
+
+    val bannerText = when {
+        micDenied -> stringResource(R.string.error_permission_mic)
+        state.error != null -> state.error!!
+        state.status.isNotBlank() -> state.status
+        else -> stringResource(R.string.record_hint)
+    }
+    val kind = when {
+        micDenied || state.error != null -> StatusKind.ERROR
+        state.done -> StatusKind.OK
+        state.recording || state.busy -> StatusKind.BUSY
+        else -> StatusKind.INFO
+    }
+    CosStatusBanner(bannerText, kind)
+
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Button(
+            onClick = {
+                if (state.busy) return@Button
+                if (state.recording) {
+                    val file = try {
+                        session.containerRef.recorder.stop()
+                    } catch (e: Exception) {
+                        viewModel.markError(VisibleFailure.of(e).message)
+                        return@Button
+                    }
+                    pendingFile = file
+                    runPipeline(file)
+                } else {
+                    val granted = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (granted) {
+                        startRecording(
+                            session,
+                            viewModel,
+                            context.getString(R.string.record_recording)
+                        ) { pendingFile = it }
+                    } else {
+                        permLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     }
                 }
-            })
+            },
+            enabled = !state.busy,
+            modifier = Modifier.size(220.dp),
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (state.recording) Danger else Teal,
+                contentColor = OnTeal
+            )
+        ) {
+            Text(
+                text = if (state.recording) {
+                    stringResource(R.string.record_stop)
+                } else {
+                    stringResource(R.string.record_start)
+                },
+                fontSize = 22.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 26.sp
+            )
         }
-        CosTextAction(stringResource(R.string.back), onClick = onBack)
+    }
+
+    if (state.done) {
+        CosPrimaryButton(stringResource(R.string.open_notes), onClick = onOpenNotes)
+    }
+    if (state.error != null) {
+        CosSecondaryButton(stringResource(R.string.try_again), onClick = {
+            val file = pendingFile
+            if (file != null && file.exists()) {
+                runPipeline(file)
+            }
+        })
     }
 }
 

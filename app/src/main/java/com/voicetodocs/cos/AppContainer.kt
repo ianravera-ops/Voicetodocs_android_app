@@ -6,7 +6,7 @@ import com.voicetodocs.cos.data.TokenExpiredException
 import com.voicetodocs.cos.data.audio.MemoRecorder
 import com.voicetodocs.cos.data.auth.GoogleAuthManager
 import com.voicetodocs.cos.data.gemini.GeminiService
-import com.voicetodocs.cos.data.google.DocsSheetsWriter
+import com.voicetodocs.cos.data.google.DocsWriter
 import com.voicetodocs.cos.data.google.DriveWorkspace
 import com.voicetodocs.cos.data.google.GmailCalendarClient
 import com.voicetodocs.cos.data.google.GoogleHttp
@@ -34,14 +34,14 @@ class AppContainer(app: Application) {
     )
 
     val drive = DriveWorkspace(http)
-    val docsSheets = DocsSheetsWriter(http)
+    val docs = DocsWriter(http)
     val gmailCalendar = GmailCalendarClient(http)
     val gemini = GeminiService(
         missingKeyMessage = app.getString(R.string.error_missing_gemini),
         networkMessage = app.getString(R.string.error_network),
         geminiErrorTemplate = app.getString(R.string.error_gemini)
     )
-    val memoPipeline = MemoPipeline(prefs, drive, docsSheets, gemini)
+    val memoPipeline = MemoPipeline(prefs, drive, docs, gemini)
 
     suspend fun <T> withFreshToken(block: suspend () -> T): T {
         return try {

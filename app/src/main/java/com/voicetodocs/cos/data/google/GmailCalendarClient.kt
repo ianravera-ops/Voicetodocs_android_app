@@ -1,9 +1,6 @@
 package com.voicetodocs.cos.data.google
 
 import android.util.Base64
-import com.voicetodocs.cos.data.AppLanguage
-import com.voicetodocs.cos.data.CalendarItem
-import com.voicetodocs.cos.data.CosFormatters
 import com.voicetodocs.cos.data.MailThread
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -11,33 +8,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.time.Instant
 import java.util.Locale
 
 class GmailCalendarClient(private val http: GoogleHttp) {
-
-    suspend fun upcomingEvents(language: AppLanguage, allDayLabel: String): List<CalendarItem> {
-        val timeMin = URLEncoder.encode(Instant.now().toString(), StandardCharsets.UTF_8)
-        val url =
-            "https://www.googleapis.com/calendar/v3/calendars/primary/events" +
-                "?timeMin=$timeMin&singleEvents=true&orderBy=startTime&maxResults=5" +
-                "&fields=items(id,summary,location,start)"
-        val json = http.get(url)
-        val items = json["items"]?.jsonArray ?: return emptyList()
-        val locale = if (language == AppLanguage.SPANISH) Locale("es", "US") else Locale.US
-        return items.mapNotNull { el ->
-            val obj = el.jsonObject
-            val start = obj["start"]?.jsonObject
-            val dateTime = start?.stringOrNull("dateTime")
-            val date = start?.stringOrNull("date")
-            CalendarItem(
-                id = obj.stringOrNull("id") ?: return@mapNotNull null,
-                title = obj.stringOrNull("summary") ?: "(No title)",
-                whenLabel = CosFormatters.formatEventWhen(dateTime, date, allDayLabel, locale),
-                location = obj.stringOrNull("location").orEmpty()
-            )
-        }
-    }
 
     suspend fun importantThreads(): List<MailThread> {
         val q = URLEncoder.encode(
@@ -91,37 +64,6 @@ class GmailCalendarClient(private val http: GoogleHttp) {
             messageIdHeader = messageId,
             toAddress = to
         )
-    }
-
-    suspend fun sendReply(
-        userEmail: String,
-        thread: MailThread,
-        bodyText: String
-    ) {
-        val subject = if (thread.subject.startsWith("Re:", ignoreCase = true)) {
-            thread.subject
-        } else {
-            "Re: ${thread.subject}"
-        }
-        val rfc = buildString {
-            append("From: ").append(userEmail).append("\r\n")
-            append("To: ").append(thread.toAddress.ifBlank { thread.from }).append("\r\n")
-            append("Subject: ").append(subject).append("\r\n")
-            if (thread.messageIdHeader.isNotBlank()) {
-                append("In-Reply-To: ").append(thread.messageIdHeader).append("\r\n")
-                append("References: ").append(thread.messageIdHeader).append("\r\n")
-            }
-            append("MIME-Version: 1.0\r\n")
-            append("Content-Type: text/plain; charset=UTF-8\r\n")
-            append("\r\n")
-            append(bodyText)
-        }
-        val raw = Base64.encodeToString(
-            rfc.toByteArray(StandardCharsets.UTF_8),
-            Base64.URL_SAFE or Base64.NO_WRAP
-        )
-        val body = """{"raw":"$raw","threadId":"${thread.id}"}"""
-        http.post("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", body)
     }
 
     private fun isNoise(from: String, subject: String): Boolean {
