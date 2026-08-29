@@ -104,6 +104,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.androidx.work.runtime.ktx)
 
     testImplementation("junit:junit:4.13.2")
     testImplementation(libs.kotlinx.coroutines.test)

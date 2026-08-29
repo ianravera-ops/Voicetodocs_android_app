@@ -21,6 +21,10 @@ class CosPreferences(private val context: Context) {
     private val inboxId = stringPreferencesKey("drive_inbox_id")
     private val notesId = stringPreferencesKey("doc_notes_id")
     private val recordingNotes = stringPreferencesKey("recording_notes")
+    private val vipEmailsKey = stringPreferencesKey("vip_emails")
+    private val vipWatermarkKey = stringPreferencesKey("vip_watermark")
+    private val vipDigestKey = stringPreferencesKey("vip_digest_items")
+    private val vipDigestErrorKey = stringPreferencesKey("vip_digest_error")
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     val languageFlow: Flow<AppLanguage> =
@@ -83,6 +87,47 @@ class CosPreferences(private val context: Context) {
         context.dataStore.edit { it[recordingNotes] = json.encodeToString(next) }
     }
 
+    suspend fun vipEmails(): List<String> {
+        val raw = context.dataStore.data.first()[vipEmailsKey] ?: return emptyList()
+        return runCatching { json.decodeFromString<List<String>>(raw) }.getOrDefault(emptyList())
+    }
+
+    suspend fun setVipEmails(emails: List<String>) {
+        context.dataStore.edit {
+            it[vipEmailsKey] = json.encodeToString(emails)
+            if ((it[vipWatermarkKey] ?: "0").toLongOrNull() == 0L) {
+                it[vipWatermarkKey] = System.currentTimeMillis().toString()
+            }
+        }
+    }
+
+    suspend fun vipWatermark(): Long =
+        context.dataStore.data.first()[vipWatermarkKey]?.toLongOrNull() ?: 0L
+
+    suspend fun setVipWatermark(millis: Long) {
+        context.dataStore.edit { it[vipWatermarkKey] = millis.toString() }
+    }
+
+    suspend fun digestItems(): List<VipDigestItem> {
+        val raw = context.dataStore.data.first()[vipDigestKey] ?: return emptyList()
+        return runCatching { json.decodeFromString<List<VipDigestItem>>(raw) }.getOrDefault(emptyList())
+    }
+
+    suspend fun addDigestItems(items: List<VipDigestItem>) {
+        val merged = (items + digestItems()).distinctBy { it.threadId }.take(15)
+        context.dataStore.edit { it[vipDigestKey] = json.encodeToString(merged) }
+    }
+
+    suspend fun digestError(): String? =
+        context.dataStore.data.first()[vipDigestErrorKey]?.takeIf { it.isNotBlank() }
+
+    suspend fun setDigestError(message: String?) {
+        context.dataStore.edit {
+            if (message.isNullOrBlank()) it.remove(vipDigestErrorKey)
+            else it[vipDigestErrorKey] = message
+        }
+    }
+
     suspend fun clearSession() {
         context.dataStore.edit {
             it.remove(email)
@@ -92,6 +137,10 @@ class CosPreferences(private val context: Context) {
             it.remove(inboxId)
             it.remove(notesId)
             it.remove(recordingNotes)
+            it.remove(vipEmailsKey)
+            it.remove(vipWatermarkKey)
+            it.remove(vipDigestKey)
+            it.remove(vipDigestErrorKey)
         }
     }
 }

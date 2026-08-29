@@ -77,17 +77,22 @@ class GoogleAuthManager(private val context: Context) {
         }
     }
 
-    suspend fun authorize(activity: Activity): String {
+    suspend fun authorize(activity: Activity): String = authorizeWith(activity)
+
+    suspend fun authorizeQuietly(): String = authorizeWith(context)
+
+    private suspend fun authorizeWith(host: Context): String {
         val request = AuthorizationRequest.builder()
             .setRequestedScopes(CosScopes.all.map { Scope(it) })
             .build()
-        val result = Identity.getAuthorizationClient(activity)
+        val result = Identity.getAuthorizationClient(host)
             .authorize(request)
             .await()
         if (result.hasResolution()) {
             val pending = result.pendingIntent
-                ?: throw CosException(context.getString(com.voicetodocs.cos.R.string.error_sign_in))
-            throw NeedsUserConsent(pending)
+                ?: throw CosException(context.getString(com.voicetodocs.cos.R.string.error_digest_sign_in))
+            if (host is Activity) throw NeedsUserConsent(pending)
+            throw CosException(context.getString(com.voicetodocs.cos.R.string.error_digest_sign_in))
         }
         val token = result.accessToken
             ?: throw CosException(context.getString(com.voicetodocs.cos.R.string.error_sign_in))

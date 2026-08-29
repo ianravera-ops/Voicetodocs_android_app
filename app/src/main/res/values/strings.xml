@@ -8,7 +8,7 @@
     <string name="language_es">Español</string>
     <string name="language_hint">What you say is written in the language you spoke. Summaries and the day list use this setting.</string>
     <string name="permissions_title">What Google access is for</string>
-    <string name="permissions_body">Drive and Docs: save each recording and a written note (full transcript plus a short summary) in a folder this app creates. It cannot see the rest of your Drive.\n\nGmail: show a few recent messages from your primary inbox, in plain language. This app cannot send email.\n\nCalendar: show what is first today. This app cannot add or change events.</string>
+    <string name="permissions_body">Drive and Docs: save each recording and a written note (full transcript plus a short summary) in a folder this app creates. It cannot see the rest of your Drive.\n\nGmail: show a few recent messages from your primary inbox, in plain language, and check mail from people you choose. This app cannot send email.\n\nCalendar: show what is first today. This app cannot add or change events.</string>
     <string name="sign_in_google">Sign in with Google</string>
     <string name="signing_in">Signing in…</string>
     <string name="creating_drive">Setting up your notes folder…</string>
@@ -59,4 +59,22 @@
     <string name="error_empty_recording">The recording was empty. Please try again.</string>
     <string name="error_missing_folder">Notes folder is missing. Sign in again from the first screen.</string>
     <string name="mic_rationale">This app records your voice note, then saves it to your Drive.</string>
+    <string name="home_vip">From people you chose</string>
+    <string name="home_vip_empty">No new mail from people you chose. Add addresses under Choose people.</string>
+    <string name="vip_choose_people">Choose people</string>
+    <string name="vip_title">People to watch</string>
+    <string name="vip_hint">Type an email address. Up to five. The app checks their mail a few times a day (about every 30 minutes, 7am–9pm Eastern) and puts the main points on Home. It never sends email for you.</string>
+    <string name="vip_empty">No one yet. Add an address.</string>
+    <string name="vip_field_label">Email address</string>
+    <string name="vip_add">Add</string>
+    <string name="vip_remove">Remove</string>
+    <string name="vip_error_email">That does not look like an email address.</string>
+    <string name="vip_error_duplicate">That address is already on the list.</string>
+    <string name="vip_error_max">You can add up to five people.</string>
+    <string name="vip_notify_rationale">Allow notifications so the phone can tell you when those people write — only then, and only as one summary, not a ping for each message.</string>
+    <string name="vip_notify_denied">Notifications are off. You will still see new mail on Home.</string>
+    <string name="vip_notify_title">New mail from people you chose</string>
+    <string name="vip_channel_name">Mail from people you chose</string>
+    <string name="vip_channel_desc">A single summary when someone you chose writes.</string>
+    <string name="error_digest_sign_in">Mail check needs you to sign in again on this phone, then try again.</string>
 </resources>

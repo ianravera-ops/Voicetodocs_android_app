@@ -8,7 +8,7 @@
     <string name="language_es">Español</string>
     <string name="language_hint">Lo que usted dice se escribe en el idioma en que lo dijo. Los resúmenes y la lista del día usan este ajuste.</string>
     <string name="permissions_title">Para qué se pide acceso a Google</string>
-    <string name="permissions_body">Drive y Docs: guardar cada grabación y una nota escrita (transcripción completa más un resumen breve) en una carpeta que crea esta aplicación. No puede ver el resto de su Drive.\n\nGmail: mostrar algunos mensajes recientes de su bandeja principal, en lenguaje sencillo. Esta aplicación no puede enviar correo.\n\nCalendario: mostrar lo primero de hoy. Esta aplicación no puede añadir ni cambiar eventos.</string>
+    <string name="permissions_body">Drive y Docs: guardar cada grabación y una nota escrita (transcripción completa más un resumen breve) en una carpeta que crea esta aplicación. No puede ver el resto de su Drive.\n\nGmail: mostrar algunos mensajes recientes de su bandeja principal, en lenguaje sencillo, y revisar el correo de las personas que usted elija. Esta aplicación no puede enviar correo.\n\nCalendario: mostrar lo primero de hoy. Esta aplicación no puede añadir ni cambiar eventos.</string>
     <string name="sign_in_google">Entrar con Google</string>
     <string name="signing_in">Entrando…</string>
     <string name="creating_drive">Preparando su carpeta de notas…</string>
@@ -59,4 +59,22 @@
     <string name="error_empty_recording">La grabación estaba vacía. Inténtelo de nuevo.</string>
     <string name="error_missing_folder">Falta la carpeta de notas. Entre otra vez desde la primera pantalla.</string>
     <string name="mic_rationale">Esta aplicación graba su nota de voz y la guarda en su Drive.</string>
+    <string name="home_vip">De las personas que eligió</string>
+    <string name="home_vip_empty">No hay correo nuevo de las personas que eligió. Añada direcciones en Elegir personas.</string>
+    <string name="vip_choose_people">Elegir personas</string>
+    <string name="vip_title">Personas a seguir</string>
+    <string name="vip_hint">Escriba una dirección de correo. Hasta cinco. La aplicación revisa su correo unas veces al día (cada 30 minutos, de 7 a 21 hora del Este) y pone lo esencial en Inicio. Nunca envía correo por usted.</string>
+    <string name="vip_empty">Nadie todavía. Añada una dirección.</string>
+    <string name="vip_field_label">Dirección de correo</string>
+    <string name="vip_add">Añadir</string>
+    <string name="vip_remove">Quitar</string>
+    <string name="vip_error_email">Eso no parece una dirección de correo.</string>
+    <string name="vip_error_duplicate">Esa dirección ya está en la lista.</string>
+    <string name="vip_error_max">Puede añadir hasta cinco personas.</string>
+    <string name="vip_notify_rationale">Permita notificaciones para que el teléfono le avise cuando esas personas escriban — solo entonces, y en un solo resumen, no un aviso por cada mensaje.</string>
+    <string name="vip_notify_denied">Las notificaciones están apagadas. El correo nuevo seguirá viéndose en Inicio.</string>
+    <string name="vip_notify_title">Correo nuevo de personas que eligió</string>
+    <string name="vip_channel_name">Correo de personas que eligió</string>
+    <string name="vip_channel_desc">Un solo resumen cuando escribe alguien que usted eligió.</string>
+    <string name="error_digest_sign_in">La revisión de correo necesita que entre otra vez en este teléfono e inténtelo de nuevo.</string>
 </resources>

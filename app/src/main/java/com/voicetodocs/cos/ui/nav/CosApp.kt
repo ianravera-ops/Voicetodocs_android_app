@@ -27,6 +27,7 @@ import com.voicetodocs.cos.ui.record.RecordViewModel
 import com.voicetodocs.cos.ui.setup.SetupScreen
 import com.voicetodocs.cos.ui.setup.SetupViewModel
 import com.voicetodocs.cos.ui.theme.CosTheme
+import com.voicetodocs.cos.ui.vip.VipPeopleScreen
 
 @Composable
 fun CosApp(session: CosSession) {
@@ -68,11 +69,18 @@ fun CosApp(session: CosSession) {
                             homeViewModel = homeVm,
                             session = session,
                             onRecord = { nav.navigate(Routes.Record) },
+                            onPeople = { nav.navigate(Routes.People) },
                             onSignOut = {
                                 nav.navigate(Routes.Setup) {
                                     popUpTo(0) { inclusive = true }
                                 }
                             }
+                        )
+                    }
+                    composable(Routes.People) {
+                        VipPeopleScreen(
+                            session = session,
+                            onBack = { nav.popBackStack() }
                         )
                     }
                     composable(Routes.Record) {
@@ -93,4 +101,5 @@ object Routes {
     const val Setup = "setup"
     const val Home = "home"
     const val Record = "record"
+    const val People = "people"
 }

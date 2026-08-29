@@ -31,6 +31,9 @@ import com.voicetodocs.cos.data.DayIndex
 import com.voicetodocs.cos.data.MailThread
 import com.voicetodocs.cos.data.RecordingNote
 import com.voicetodocs.cos.data.VisibleFailure
+import com.voicetodocs.cos.data.digest.VipDigestRunner
+import com.voicetodocs.cos.data.digest.VipDigestScheduler
+import com.voicetodocs.cos.data.digest.VipNotifier
 import com.voicetodocs.cos.ui.CosSession
 import com.voicetodocs.cos.ui.components.CosBody
 import com.voicetodocs.cos.ui.components.CosCard
@@ -53,6 +56,7 @@ fun HomeScreen(
     homeViewModel: HomeViewModel,
     session: CosSession,
     onRecord: () -> Unit,
+    onPeople: () -> Unit,
     onSignOut: () -> Unit
 ) {
     val state by homeViewModel.state.collectAsStateWithLifecycle()
@@ -86,8 +90,27 @@ fun HomeScreen(
                 }
             }
             homeViewModel.showDay(notes, mail, first)
+            homeViewModel.showDigest(
+                session.containerRef.prefs.digestItems(),
+                session.containerRef.prefs.digestError()
+            )
             if (errors.isNotEmpty()) {
                 throw CosException(errors.joinToString("\n"))
+            }
+        }
+    }
+
+    fun retryDigest() {
+        homeViewModel.load {
+            try {
+                session.withAccess {
+                    VipDigestRunner(session.containerRef, VipNotifier(context)).run(notify = true)
+                }
+            } finally {
+                homeViewModel.showDigest(
+                    session.containerRef.prefs.digestItems(),
+                    session.containerRef.prefs.digestError()
+                )
             }
         }
     }
@@ -137,6 +160,7 @@ fun HomeScreen(
         }
 
         CosPrimaryButton(stringResource(R.string.record_note), onClick = onRecord)
+        CosSecondaryButton(stringResource(R.string.vip_choose_people), onClick = onPeople)
 
         if (state.loading) {
             CosStatusBanner(stringResource(R.string.loading), StatusKind.BUSY)
@@ -155,6 +179,21 @@ fun HomeScreen(
                     NoteRow(note)
                 }
             }
+            Text(stringResource(R.string.home_vip), fontSize = 16.sp, color = Teal)
+            state.digestError?.let {
+                CosStatusBanner(it, StatusKind.ERROR)
+                CosSecondaryButton(stringResource(R.string.try_again), onClick = { retryDigest() })
+            }
+            if (state.vipItems.isEmpty() && state.digestError == null) {
+                CosBody(stringResource(R.string.home_vip_empty))
+            } else {
+                state.vipItems.forEach { item ->
+                    Text(item.subject, fontSize = 17.sp, color = Ink)
+                    CosBody(item.from)
+                    CosBody(item.summary)
+                }
+            }
+
             Text(stringResource(R.string.home_mail), fontSize = 16.sp, color = Teal)
             if (!state.loading && state.mail.isEmpty() && state.error == null) {
                 CosBody(stringResource(R.string.home_no_mail))
@@ -231,6 +270,7 @@ fun HomeScreen(
                 } catch (_: CosException) {
                     // leave local session even if Google sign-out fails
                 }
+                VipDigestScheduler.cancel(context)
                 onSignOut()
             }
         }

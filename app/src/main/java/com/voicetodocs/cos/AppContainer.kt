@@ -10,6 +10,7 @@ import com.voicetodocs.cos.data.google.DocsWriter
 import com.voicetodocs.cos.data.google.DriveWorkspace
 import com.voicetodocs.cos.data.google.GmailCalendarClient
 import com.voicetodocs.cos.data.google.GoogleHttp
+import com.voicetodocs.cos.data.digest.VipDigestScheduler
 import com.voicetodocs.cos.data.pipeline.MemoPipeline
 
 class CosApplication : Application() {
@@ -19,6 +20,7 @@ class CosApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        VipDigestScheduler.ensure(this)
     }
 }
 

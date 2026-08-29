@@ -48,7 +48,17 @@ data class MailThread(
     val snippet: String,
     val plainLanguage: String,
     val messageIdHeader: String,
-    val toAddress: String
+    val toAddress: String,
+    val internalDateMillis: Long = 0L
+)
+
+@Serializable
+data class VipDigestItem(
+    val threadId: String,
+    val from: String,
+    val subject: String,
+    val summary: String,
+    val internalDateMillis: Long
 )
 
 data class SignedInUser(

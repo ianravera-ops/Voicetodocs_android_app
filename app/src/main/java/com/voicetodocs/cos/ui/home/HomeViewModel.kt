@@ -9,6 +9,7 @@ import com.voicetodocs.cos.data.DayIndex
 import com.voicetodocs.cos.data.MailThread
 import com.voicetodocs.cos.data.RecordingNote
 import com.voicetodocs.cos.data.SignedInUser
+import com.voicetodocs.cos.data.VipDigestItem
 import com.voicetodocs.cos.data.VisibleFailure
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,8 @@ data class HomeUiState(
     val openNotes: List<RecordingNote> = emptyList(),
     val mail: List<MailThread> = emptyList(),
     val firstToday: CalendarItem? = null,
+    val vipItems: List<VipDigestItem> = emptyList(),
+    val digestError: String? = null,
     val loading: Boolean = false,
     val error: String? = null
 )
@@ -67,6 +70,10 @@ class HomeViewModel : ViewModel() {
                 firstToday = firstToday
             )
         }
+    }
+
+    fun showDigest(items: List<VipDigestItem>, error: String?) {
+        _state.update { it.copy(vipItems = items, digestError = error) }
     }
 
     fun setLanguage(language: AppLanguage) {

@@ -82,4 +82,13 @@ class VisibleFailureTest {
         vm.load { vm.showDay(emptyList(), emptyList(), null) }
         assertNull(vm.state.value.error)
     }
+
+    @Test
+    fun digestFailureStaysVisibleOnHome() {
+        val vm = HomeViewModel()
+        vm.showDigest(emptyList(), "Gemini could not finish: digest 503")
+        assertEquals("Gemini could not finish: digest 503", vm.state.value.digestError)
+        vm.showDigest(emptyList(), null)
+        assertNull(vm.state.value.digestError)
+    }
 }

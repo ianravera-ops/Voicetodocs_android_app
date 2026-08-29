@@ -39,12 +39,13 @@ Use real IDs from Cloud Console. The repo only has placeholders.
 5. Choose **English** or **Español**. Sign in with the account that owns the Drive, Gmail, and Calendar you want.
 6. Grant Drive / Docs / Gmail read / Calendar read. The app creates a `Voice notes` folder and one Google Doc on **that** account (`drive.file` — it cannot see the rest of Drive).
 7. Home shows **Yesterday** (recordings with main points + 2–3 primary inbox summaries) and **What’s first today** (next calendar item + anything still open).
-8. Tap **Record a note**. Use the large button, speak, tap **Stop**. Status stays on screen. If Gemini or Drive fails, the error stays with **Try again**.
-9. Go back. The new main points are on today’s list. No Drive search.
+8. Tap **Choose people**. The list starts empty — type 4–5 email addresses yourself. Allow notifications in plain language if asked.
+9. About every 30 minutes, 7am–9pm America/New_York, all week, the app checks **those** senders with her Gmail token. If nothing new, no notification. If there is new mail, Gemini pulls main points (same in-app key), Home shows one digest, and the phone fires **one** notification.
+10. Tap **Record a note**. Use the large button, speak, tap **Stop**. Status stays on screen. If Gemini, Drive, Gmail, calendar, or the digest fails, the error stays with **Try again**.
 
 ## Scopes (plain language)
 
-- Gmail read — a few important primary-inbox threads, not promotions
+- Gmail read — a few important primary-inbox threads, plus mail from people she typed (no send)
 - Calendar read — what is first today (no writes)
 - Drive file / Docs — create the notes folder and write the Doc
 - Not requested: Gmail send
@@ -57,7 +58,8 @@ Use real IDs from Cloud Console. The repo only has placeholders.
 | Gmail / Calendar / Drive tokens | AuthorizationClient (`play-services-auth`) |
 | REST | OkHttp (Drive, Docs, Gmail, Calendar, Gemini) |
 | UI | Jetpack Compose + Material 3 |
-| Settings | DataStore (language, Drive ids, day-list notes, signed-in email) |
+| Background digest | WorkManager (30 minutes, 7am–9pm Eastern) |
+| Settings | DataStore (language, Drive ids, day-list notes, people list, digest watermark) |
 
 ## Out of scope
 
