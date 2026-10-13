@@ -1,6 +1,7 @@
 # Cloud Agent base image for the VoiceToDocs Android app.
 # Provides a deterministic Android build toolchain: JDK 17 + Android SDK
-# (platform-tools, platforms;android-34, build-tools;34.0.0).
+# (platform-tools, platforms;android-35, build-tools;35.0.0).
+# compileSdk in app/build.gradle.kts is 35, so the image must ship that platform.
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -32,8 +33,8 @@ ENV PATH="${JAVA_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HO
 RUN yes | sdkmanager --licenses > /dev/null \
     && sdkmanager \
         "platform-tools" \
-        "platforms;android-34" \
-        "build-tools;34.0.0"
+        "platforms;android-35" \
+        "build-tools;35.0.0"
 
 # Run as the non-root user that Cloud Agents use, and give it ownership of the SDK
 # so on-demand SDK components (e.g. an emulator image) can be added later.

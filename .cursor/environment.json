@@ -5,5 +5,5 @@
     "context": ".."
   },
   "user": "ubuntu",
-  "install": "./gradlew --no-daemon assembleDebug testDebugUnitTest"
+  "install": "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64\nexport ANDROID_HOME=/opt/android-sdk\nexport ANDROID_SDK_ROOT=/opt/android-sdk\nexport PATH=\"$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH\"\n./gradlew --no-daemon assembleDebug"
 }
